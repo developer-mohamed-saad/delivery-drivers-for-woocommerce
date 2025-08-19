@@ -16,10 +16,19 @@
  */
 function ddwc_driver_dashboard_change_statuses() {
 
-	// Get an instance of the WC_Order object.
-	$order        = wc_get_order( $_GET['orderid'] );
-	$order_data   = $order->get_data();
-	$order_status = $order_data['status'];
+        // Get an instance of the WC_Order object.
+        $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
+        if ( ! $order_id ) {
+                return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+                return;
+        }
+
+        $order_data   = $order->get_data();
+        $order_status = $order_data['status'];
 
 	do_action( 'ddwc_driver_dashboard_change_statuses_top' );
 
@@ -43,7 +52,8 @@ function ddwc_driver_dashboard_change_statuses() {
 		do_action( 'ddwc_email_customer_order_status_out_for_delivery' );
 
 		// Redirect so the new order details show on the page.
-		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
+                wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
+                exit;
 
 	}
 
@@ -57,7 +67,8 @@ function ddwc_driver_dashboard_change_statuses() {
 		do_action( 'ddwc_email_admin_order_status_completed' );
 
 		// Redirect so the new order details show on the page.
-		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
+                wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
+                exit;
 
 	}
 
@@ -76,10 +87,19 @@ add_action( 'ddwc_driver_dashboard_change_status_forms_top', 'ddwc_driver_dashbo
  */
 function ddwc_driver_dashboard_change_status_forms() {
 
-	// Get an instance of the WC_Order object.
-	$order        = wc_get_order( $_GET['orderid'] );
-	$order_data   = $order->get_data();
-	$order_status = $order_data['status'];
+        // Get an instance of the WC_Order object.
+        $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
+        if ( ! $order_id ) {
+                return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+                return;
+        }
+
+        $order_data   = $order->get_data();
+        $order_status = $order_data['status'];
 
 	do_action( 'ddwc_driver_dashboard_change_status_forms_top' );
 
