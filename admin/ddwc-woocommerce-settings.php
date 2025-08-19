@@ -131,6 +131,18 @@ class Delivery_Drivers_WooCommerce_Settings {
 					'no'  => 'No',
 				),
 			),
+		       // Driver assignment algorithm.
+		       'assignment_algorithm' => array(
+			       'name'    => __( 'Driver assignment algorithm', 'ddwc' ),
+			       'type'    => 'select',
+			       'desc'    => __( 'Select how drivers are assigned to new orders.', 'ddwc' ),
+			       'id'      => 'ddwc_settings_assignment_algorithm',
+			       'default' => 'least_orders',
+			       'options' => array(
+				       'least_orders' => __( 'Least open deliveries', 'ddwc' ),
+				       'random'       => __( 'Random', 'ddwc' ),
+			       ),
+		       ),
 			// Section End.
 			'section_end' => array(
 				'type' => 'sectionend',
@@ -165,7 +177,7 @@ function ddwc_custom_user_redirect( $redirect, $user ) {
 
 	// Redirect normally if user is on checkout page.
     if( $redirect_page_id == $checkout_page_id ) {
-        return $redirect;
+	return $redirect;
 	}
 
 	// Redirect delivery drivers to the dashboard.
