@@ -83,7 +83,7 @@ class Delivery_Drivers_Admin {
 }
 
 /**
- * Add Deliver Driver Column to Orders screen
+ * Add Delivery Driver Column to Orders screen
  *
  * @param [type] $columns
  * @since 2.1
