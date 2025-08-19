@@ -141,3 +141,72 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 
     return false;
 }
+
+/**
+ * Auto-assign a delivery driver to new orders.
+ *
+ * Selects an available driver based on the configured algorithm and stores
+ * the driver ID in the order's meta data.
+ *
+ * @since 2.5.0
+ *
+ * @param int $order_id Order ID.
+ */
+function ddwc_auto_assign_driver_to_order( $order_id ) {
+
+        // Bail if a driver is already assigned.
+        if ( get_post_meta( $order_id, 'ddwc_driver_id', true ) ) {
+                return;
+        }
+
+        // Get available drivers.
+        $driver_args = array(
+                'role'       => 'driver',
+                'meta_key'   => 'ddwc_driver_availability',
+                'meta_value' => 'on',
+        );
+        $drivers     = get_users( $driver_args );
+
+        if ( empty( $drivers ) ) {
+                return;
+        }
+
+        // Determine assignment algorithm.
+        $algorithm = get_option( 'ddwc_settings_assignment_algorithm', 'least_orders' );
+        $driver_id = 0;
+
+        if ( 'random' === $algorithm ) {
+                $driver    = $drivers[ array_rand( $drivers ) ];
+                $driver_id = $driver->ID;
+        } else {
+                $least_orders = null;
+                foreach ( $drivers as $driver ) {
+                        $order_args = array(
+                                'post_type'      => 'shop_order',
+                                'post_status'    => array( 'wc-driver-assigned', 'wc-out-for-delivery' ),
+                                'meta_key'       => 'ddwc_driver_id',
+                                'meta_value'     => $driver->ID,
+                                'fields'         => 'ids',
+                                'posts_per_page' => -1,
+                        );
+                        $open_orders = get_posts( $order_args );
+                        $count       = count( $open_orders );
+
+                        if ( is_null( $least_orders ) || $count < $least_orders ) {
+                                $least_orders = $count;
+                                $driver_id    = $driver->ID;
+                        }
+                }
+        }
+
+        if ( $driver_id ) {
+                update_post_meta( $order_id, 'ddwc_driver_id', $driver_id );
+
+                // Update order status to show driver assignment.
+                $order = wc_get_order( $order_id );
+                if ( $order ) {
+                        $order->update_status( 'driver-assigned' );
+                }
+        }
+}
+add_action( 'woocommerce_new_order', 'ddwc_auto_assign_driver_to_order' );

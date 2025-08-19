@@ -121,21 +121,33 @@ class Delivery_Drivers_WooCommerce_Settings {
 				),
 			),
 			// Driver phone number.
-			'driver_phone_number' => array(
-				'name' => __( 'Driver phone number', 'ddwc' ),
-				'type' => 'select',
-				'desc' => __( 'Add a button for customers to call driver in the driver details.', 'ddwc' ),
-				'id'   => 'ddwc_settings_driver_phone_number',
-				'options' => array(
-					'yes' => 'Yes',
-					'no'  => 'No',
-				),
-			),
-			// Section End.
-			'section_end' => array(
-				'type' => 'sectionend',
-				'id'   => 'ddwc_settings_section_end'
-			),
+                        'driver_phone_number' => array(
+                                'name' => __( 'Driver phone number', 'ddwc' ),
+                                'type' => 'select',
+                                'desc' => __( 'Add a button for customers to call driver in the driver details.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_driver_phone_number',
+                                'options' => array(
+                                        'yes' => 'Yes',
+                                        'no'  => 'No',
+                                ),
+                        ),
+                       // Driver assignment algorithm.
+                       'assignment_algorithm' => array(
+                               'name'    => __( 'Driver assignment algorithm', 'ddwc' ),
+                               'type'    => 'select',
+                               'desc'    => __( 'Select how drivers are assigned to new orders.', 'ddwc' ),
+                               'id'      => 'ddwc_settings_assignment_algorithm',
+                               'default' => 'least_orders',
+                               'options' => array(
+                                       'least_orders' => __( 'Least open deliveries', 'ddwc' ),
+                                       'random'       => __( 'Random', 'ddwc' ),
+                               ),
+                       ),
+                        // Section End.
+                        'section_end' => array(
+                                'type' => 'sectionend',
+                                'id'   => 'ddwc_settings_section_end'
+                        ),
 		);
 		return apply_filters( 'ddwc_woocommerce_settings', $settings );
 
