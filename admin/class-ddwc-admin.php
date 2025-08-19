@@ -179,15 +179,29 @@ add_filter( 'post_class', 'ddwc_add_no_link_to_woocommerce_orders' );
  */
 function ddwc_delivery_driver_settings() {
 
-	$item_id    = $_POST['item_id'];
-	$meta_key   = $_POST['metakey'];
-	$meta_value = $_POST['metavalue'];
+        $item_id    = $_POST['item_id'];
+        $meta_key   = $_POST['metakey'];
+        $meta_value = $_POST['metavalue'];
 
-	// Update driver ID for order.
-	update_post_meta( $item_id, $meta_key, $meta_value );
+        // Store previous driver to detect changes.
+        $previous_driver = get_post_meta( $item_id, $meta_key, true );
 
-	// Get order.
-	$order = new WC_Order( $item_id );
+        // Update driver ID for order.
+        update_post_meta( $item_id, $meta_key, $meta_value );
+
+        // Get order.
+        $order = new WC_Order( $item_id );
+
+        // Update order status and trigger notification when assigning a driver.
+        if ( -1 == $meta_value ) {
+                $order->update_status( 'processing' );
+        } else {
+                $order->update_status( 'driver-assigned' );
+
+                if ( intval( $meta_value ) > 0 && intval( $meta_value ) !== intval( $previous_driver ) ) {
+                        do_action( 'ddwc_driver_assigned', $item_id, intval( $meta_value ) );
+                }
+        }
 
 	// Update order status.
 	if ( -1 == $meta_value ) {
