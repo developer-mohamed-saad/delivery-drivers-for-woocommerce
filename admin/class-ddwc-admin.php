@@ -188,6 +188,22 @@ function ddwc_delivery_driver_settings() {
 
         // Update driver ID for order.
         update_post_meta( $item_id, $meta_key, $meta_value );
+// codex/trigger-email-and-sms-on-driver-assignment-i6vif7
+
+        // Get order.
+        $order = new WC_Order( $item_id );
+
+        // Update order status and trigger notification when assigning a driver.
+        if ( -1 == $meta_value ) {
+                $order->update_status( 'processing' );
+        } else {
+                $order->update_status( 'driver-assigned' );
+
+                if ( intval( $meta_value ) > 0 && intval( $meta_value ) !== intval( $previous_driver ) ) {
+                        do_action( 'ddwc_driver_assigned', $item_id, intval( $meta_value ) );
+                }
+        }
+
 
         // Get order.
         $order = new WC_Order( $item_id );

@@ -178,6 +178,9 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 }
 
 /**
+* codex/trigger-email-and-sms-on-driver-assignment-i6vif7
+ codex/trigger-email-and-sms-on-driver-assignment-i6vif7
+=======
 * codex/add-email/sms-notifications-for-order-status
  * Notify customer when an order is marked out for delivery.
  *
@@ -272,6 +275,8 @@ function ddwc_notify_driver_assignment( $order_id, $driver_id ) {
 add_action( 'ddwc_driver_assigned', 'ddwc_notify_driver_assignment', 10, 2 );
 add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
 
+
+// codex/trigger-email-and-sms-on-driver-assignment-i6vif7
 
  *codex/implement-driver-selection-for-new-orders
  * Auto-assign a delivery driver to new orders.
@@ -396,7 +401,7 @@ function ddwc_notify_admin_order_completed() {
         }
 }
 add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_out_for_delivery_notification' );
-=======
+
                 $response = wp_remote_post( $twilio_url, $sms_args );
 
                 if ( $logger ) {
@@ -413,3 +418,4 @@ add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_
         }
 }
 add_action( 'ddwc_email_admin_order_status_completed', 'ddwc_notify_admin_order_completed' );
+ 
