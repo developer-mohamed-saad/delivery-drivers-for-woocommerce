@@ -119,7 +119,6 @@ function ddwc_driver_dashboard_change_status_forms() {
 
 	do_action( 'ddwc_driver_dashboard_change_status_forms_top' );
 
-	// Create variable.
 	$change_status = '';
 
 	if ( 'driver-assigned' == $order_status ) {
@@ -179,6 +178,53 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 }
 
 /**
+* codex/add-email/sms-notifications-for-order-status
+ * Notify customer when an order is marked out for delivery.
+ *
+ * Sends an email via wp_mail and an SMS message via Twilio using the
+ * customer's contact details on the order.
+ *
+ * @since 2.0.0
+ */
+function ddwc_customer_out_for_delivery_notification() {
+
+        // Only run if notifications are enabled.
+        if ( 'yes' !== get_option( 'ddwc_settings_customer_ofd_notifications', 'no' ) ) {
+                return;
+        }
+
+        // Order ID passed via URL on driver dashboard.
+        if ( empty( $_GET['orderid'] ) ) {
+                return;
+        }
+
+        $order = wc_get_order( absint( $_GET['orderid'] ) );
+
+        if ( ! $order ) {
+                return;
+        }
+
+        $email = $order->get_billing_email();
+        $phone = wc_sanitize_phone_number( $order->get_billing_phone() );
+
+        $subject = sprintf( __( 'Order #%s is out for delivery', 'ddwc' ), $order->get_order_number() );
+        $message = __( 'Your order is on the way!', 'ddwc' );
+
+        if ( $email ) {
+                wp_mail( $email, $subject, $message );
+        }
+
+        $twilio_sid   = get_option( 'ddwc_settings_twilio_account_sid' );
+        $twilio_token = get_option( 'ddwc_settings_twilio_auth_token' );
+        $twilio_from  = get_option( 'ddwc_settings_twilio_from_number' );
+
+        if ( $phone && $twilio_sid && $twilio_token && $twilio_from ) {
+                $endpoint = 'https://api.twilio.com/2010-04-01/Accounts/' . $twilio_sid . '/Messages.json';
+                $args     = array(
+                        'body'    => array(
+                                'From' => $twilio_from,
+                                'To'   => $phone,
+
 * codex/trigger-email-and-sms-on-driver-assignment
  * Notify a delivery driver when assigned to an order.
  *
@@ -227,7 +273,7 @@ add_action( 'ddwc_driver_assigned', 'ddwc_notify_driver_assignment', 10, 2 );
 add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
 
 
- codex/implement-driver-selection-for-new-orders
+ *codex/implement-driver-selection-for-new-orders
  * Auto-assign a delivery driver to new orders.
  *
  * Selects an available driver based on the configured algorithm and stores
@@ -345,6 +391,12 @@ function ddwc_notify_admin_order_completed() {
                         ),
                 );
 
+// codex/add-email/sms-notifications-for-order-status
+                wp_remote_post( $endpoint, $args );
+        }
+}
+add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_out_for_delivery_notification' );
+=======
                 $response = wp_remote_post( $twilio_url, $sms_args );
 
                 if ( $logger ) {

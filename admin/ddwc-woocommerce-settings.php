@@ -120,6 +120,36 @@ class Delivery_Drivers_WooCommerce_Settings {
 					'no'  => 'No',
 				),
 			),
+// codex/add-email/sms-notifications-for-order-status
+                        // Driver phone number.
+                        'driver_phone_number' => array(
+                                'name' => __( 'Driver phone number', 'ddwc' ),
+                                'type' => 'select',
+                                'desc' => __( 'Add a button for customers to call driver in the driver details.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_driver_phone_number',
+                                'options' => array(
+                                        'yes' => 'Yes',
+                                        'no'  => 'No',
+                                ),
+                        ),
+                        // Customer Out for Delivery notifications.
+                        'customer_ofd_notifications' => array(
+                                'name' => __( 'Customer notifications', 'ddwc' ),
+                                'type' => 'select',
+                                'desc' => __( 'Email/SMS customer when order is marked out for delivery.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_customer_ofd_notifications',
+                                'options' => array(
+                                        'yes' => 'Yes',
+                                        'no'  => 'No',
+                                ),
+                                'default' => 'no',
+                        ),
+                        // Twilio Account SID.
+                        'twilio_account_sid' => array(
+                                'name' => __( 'Twilio Account SID', 'ddwc' ),
+                                'type' => 'text',
+                                'desc' => __( 'Your Twilio Account SID for sending SMS notifications.', 'ddwc' ),
+
 			// Driver phone number.
 			'driver_phone_number' => array(
 				'name' => __( 'Driver phone number', 'ddwc' ),
@@ -143,6 +173,22 @@ class Delivery_Drivers_WooCommerce_Settings {
                         'twilio_auth_token' => array(
                                 'name' => __( 'Twilio Auth Token', 'ddwc' ),
                                 'type' => 'password',
+                                'desc' => __( 'Your Twilio Auth Token for sending SMS notifications.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_twilio_auth_token',
+                        ),
+                        // Twilio phone number.
+                        'twilio_from_number' => array(
+                                'name' => __( 'Twilio phone number', 'ddwc' ),
+                                'type' => 'text',
+                                'desc' => __( 'Twilio number used to send SMS messages.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_twilio_from_number',
+                        ),
+                        // Section End.
+                        'section_end' => array(
+                                'type' => 'sectionend',
+                                'id'   => 'ddwc_settings_section_end'
+                        ),
+
                                 'desc' => __( 'Twilio auth token used for sending SMS notifications.', 'ddwc' ),
                                 'id'   => 'ddwc_settings_twilio_auth_token',
                         ),
