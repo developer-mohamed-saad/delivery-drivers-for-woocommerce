@@ -154,6 +154,11 @@ class DDWC {
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/ddwc-woocommerce-driver-ratings.php';
 
+                /**
+                 * The class responsible for sending SMS via Twilio.
+                 */
+                require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/class-ddwc-twilio.php';
+
 		/**
 		 * The class responsible for defining all actions that occur in the public-facing
 		 * side of the site.

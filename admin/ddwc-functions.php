@@ -50,6 +50,14 @@ function ddwc_driver_dashboard_change_statuses() {
 
 		// Run additional functions.
 		do_action( 'ddwc_email_customer_order_status_out_for_delivery' );
+                // Send SMS notification to customer.
+                $customer_phone = $order->get_billing_phone();
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $customer_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'Your order #%s is out for delivery.', 'ddwc' ), $order->get_id() );
+                        $twilio->send_sms( $customer_phone, $dispatch_phone, $message );
+                }
 
 		// Redirect so the new order details show on the page.
                 wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
@@ -65,6 +73,14 @@ function ddwc_driver_dashboard_change_statuses() {
 
 		// Run additional functions.
 		do_action( 'ddwc_email_admin_order_status_completed' );
+                // Send SMS notification to customer.
+                $customer_phone = $order->get_billing_phone();
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $customer_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'Your order #%s has been delivered.', 'ddwc' ), $order->get_id() );
+                        $twilio->send_sms( $customer_phone, $dispatch_phone, $message );
+                }
 
 		// Redirect so the new order details show on the page.
                 wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
@@ -103,7 +119,6 @@ function ddwc_driver_dashboard_change_status_forms() {
 
 	do_action( 'ddwc_driver_dashboard_change_status_forms_top' );
 
-	// Create variable.
 	$change_status = '';
 
 	if ( 'driver-assigned' == $order_status ) {
@@ -145,25 +160,75 @@ function ddwc_driver_dashboard_change_status_forms() {
 function ddwc_check_user_roles( $roles, $user_id = null ) {
 
     if ( is_numeric( $user_id ) )
-        $user = get_userdata( $user_id );
+	$user = get_userdata( $user_id );
     else
-        $user = wp_get_current_user();
+	$user = wp_get_current_user();
 
     if ( empty( $user ) )
-        return false;
+	return false;
 
     $user_roles = (array) $user->roles;
 
     foreach ( (array) $roles as $role ) {
-        if ( in_array( $role, $user_roles ) )
-            return true;
+	if ( in_array( $role, $user_roles ) )
+	    return true;
     }
 
     return false;
 }
 
 /**
+* codex/trigger-email-and-sms-on-driver-assignment-i6vif7
  codex/trigger-email-and-sms-on-driver-assignment-i6vif7
+=======
+* codex/add-email/sms-notifications-for-order-status
+ * Notify customer when an order is marked out for delivery.
+ *
+ * Sends an email via wp_mail and an SMS message via Twilio using the
+ * customer's contact details on the order.
+ *
+ * @since 2.0.0
+ */
+function ddwc_customer_out_for_delivery_notification() {
+
+        // Only run if notifications are enabled.
+        if ( 'yes' !== get_option( 'ddwc_settings_customer_ofd_notifications', 'no' ) ) {
+                return;
+        }
+
+        // Order ID passed via URL on driver dashboard.
+        if ( empty( $_GET['orderid'] ) ) {
+                return;
+        }
+
+        $order = wc_get_order( absint( $_GET['orderid'] ) );
+
+        if ( ! $order ) {
+                return;
+        }
+
+        $email = $order->get_billing_email();
+        $phone = wc_sanitize_phone_number( $order->get_billing_phone() );
+
+        $subject = sprintf( __( 'Order #%s is out for delivery', 'ddwc' ), $order->get_order_number() );
+        $message = __( 'Your order is on the way!', 'ddwc' );
+
+        if ( $email ) {
+                wp_mail( $email, $subject, $message );
+        }
+
+        $twilio_sid   = get_option( 'ddwc_settings_twilio_account_sid' );
+        $twilio_token = get_option( 'ddwc_settings_twilio_auth_token' );
+        $twilio_from  = get_option( 'ddwc_settings_twilio_from_number' );
+
+        if ( $phone && $twilio_sid && $twilio_token && $twilio_from ) {
+                $endpoint = 'https://api.twilio.com/2010-04-01/Accounts/' . $twilio_sid . '/Messages.json';
+                $args     = array(
+                        'body'    => array(
+                                'From' => $twilio_from,
+                                'To'   => $phone,
+
+* codex/trigger-email-and-sms-on-driver-assignment
  * Notify a delivery driver when assigned to an order.
  *
  * Sends both an email and an SMS message using Twilio when a driver is
@@ -210,6 +275,77 @@ function ddwc_notify_driver_assignment( $order_id, $driver_id ) {
 add_action( 'ddwc_driver_assigned', 'ddwc_notify_driver_assignment', 10, 2 );
 add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
 
+
+// codex/trigger-email-and-sms-on-driver-assignment-i6vif7
+
+ *codex/implement-driver-selection-for-new-orders
+ * Auto-assign a delivery driver to new orders.
+ *
+ * Selects an available driver based on the configured algorithm and stores
+ * the driver ID in the order's meta data.
+ *
+ * @since 2.5.0
+ *
+ * @param int $order_id Order ID.
+ */
+function ddwc_auto_assign_driver_to_order( $order_id ) {
+
+	// Bail if a driver is already assigned.
+	if ( get_post_meta( $order_id, 'ddwc_driver_id', true ) ) {
+		return;
+	}
+
+	// Get available drivers.
+	$driver_args = array(
+		'role'       => 'driver',
+		'meta_key'   => 'ddwc_driver_availability',
+		'meta_value' => 'on',
+	);
+	$drivers     = get_users( $driver_args );
+
+	if ( empty( $drivers ) ) {
+		return;
+	}
+
+	// Determine assignment algorithm.
+	$algorithm = get_option( 'ddwc_settings_assignment_algorithm', 'least_orders' );
+	$driver_id = 0;
+
+	if ( 'random' === $algorithm ) {
+		$driver    = $drivers[ array_rand( $drivers ) ];
+		$driver_id = $driver->ID;
+	} else {
+		$least_orders = null;
+		foreach ( $drivers as $driver ) {
+			$order_args = array(
+				'post_type'      => 'shop_order',
+				'post_status'    => array( 'wc-driver-assigned', 'wc-out-for-delivery' ),
+				'meta_key'       => 'ddwc_driver_id',
+				'meta_value'     => $driver->ID,
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+			);
+			$open_orders = get_posts( $order_args );
+			$count       = count( $open_orders );
+
+			if ( is_null( $least_orders ) || $count < $least_orders ) {
+				$least_orders = $count;
+				$driver_id    = $driver->ID;
+			}
+		}
+	}
+
+	if ( $driver_id ) {
+		update_post_meta( $order_id, 'ddwc_driver_id', $driver_id );
+
+		// Update order status to show driver assignment.
+		$order = wc_get_order( $order_id );
+		if ( $order ) {
+			$order->update_status( 'driver-assigned' );
+		}
+	}
+}
+add_action( 'woocommerce_new_order', 'ddwc_auto_assign_driver_to_order' );
 
  * Send admin notifications when a driver completes an order.
  *
@@ -259,6 +395,12 @@ function ddwc_notify_admin_order_completed() {
                                 'Authorization' => 'Basic ' . base64_encode( $twilio_sid . ':' . $twilio_token ),
                         ),
                 );
+
+// codex/add-email/sms-notifications-for-order-status
+                wp_remote_post( $endpoint, $args );
+        }
+}
+add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_out_for_delivery_notification' );
 
                 $response = wp_remote_post( $twilio_url, $sms_args );
 
