@@ -20,7 +20,7 @@ This plugin gives you the ability to add new users with the designated `Driver` 
 
 Once the driver has been added to your userlist, you can edit orders and assign a specific driver to the order.
 
-### Driver capabilites
+### Driver capabilities
 
 Give your drivers the ability to view their assigned orders, mark an order as `Out for Delivery` and then `Completed` after the order has been delivered.
 
@@ -56,3 +56,13 @@ Below are a few examples of delivery services that can benefit from the **Delive
 ## Changelog
 
 View [CHANGELOG.md](https://github.com/robertdevore/delivery-drivers-for-woocommerce/blob/master/CHANGELOG.md)
+## Tests
+
+This plugin uses the WordPress unit test framework with PHPUnit.
+
+1. Install the WordPress tests library and configure the `WP_TESTS_DIR` environment variable.
+2. From the plugin directory, run:
+
+   ```bash
+   phpunit
+   ```

@@ -83,7 +83,7 @@ class Delivery_Drivers_Admin {
 }
 
 /**
- * Add Deliver Driver Column to Orders screen
+ * Add Delivery Driver Column to Orders screen
  *
  * @param [type] $columns
  * @since 2.1
@@ -179,21 +179,44 @@ add_filter( 'post_class', 'ddwc_add_no_link_to_woocommerce_orders' );
  */
 function ddwc_delivery_driver_settings() {
 
-	$item_id    = $_POST['item_id'];
-	$meta_key   = $_POST['metakey'];
-	$meta_value = $_POST['metavalue'];
+        $item_id    = $_POST['item_id'];
+        $meta_key   = $_POST['metakey'];
+        $meta_value = $_POST['metavalue'];
 
-	// Update driver ID for order.
-	update_post_meta( $item_id, $meta_key, $meta_value );
+        // Store previous driver to detect changes.
+        $previous_driver = get_post_meta( $item_id, $meta_key, true );
 
-	// Get order.
-	$order = new WC_Order( $item_id );
+        // Update driver ID for order.
+        update_post_meta( $item_id, $meta_key, $meta_value );
+
+        // Get order.
+        $order = new WC_Order( $item_id );
+
+        // Update order status and trigger notification when assigning a driver.
+        if ( -1 == $meta_value ) {
+                $order->update_status( 'processing' );
+        } else {
+                $order->update_status( 'driver-assigned' );
+
+                if ( intval( $meta_value ) > 0 && intval( $meta_value ) !== intval( $previous_driver ) ) {
+                        do_action( 'ddwc_driver_assigned', $item_id, intval( $meta_value ) );
+                }
+        }
 
 	// Update order status.
 	if ( -1 == $meta_value ) {
 		$order->update_status( 'processing' );
 	} else {
 		$order->update_status( 'driver-assigned' );
+
+                // Send SMS notification to driver.
+                $driver_phone   = get_user_meta( $meta_value, 'billing_phone', true );
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $driver_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'You have been assigned to order #%s', 'ddwc' ), $item_id );
+                        $twilio->send_sms( $driver_phone, $dispatch_phone, $message );
+                }
 	}
 
 	// WooCommerce product loop $args
@@ -244,3 +267,57 @@ function ddwc_driver_availability_update() {
 }
 add_action( 'wp_ajax_ddwc_driver_availability_update', 'ddwc_driver_availability_update' );
 add_action( 'wp_ajax_nopriv_ddwc_driver_availability_update', 'ddwc_driver_availability_update' );
+
+/**
+ * Add admin page to manage driver applications.
+ *
+ * @since 2.5.0
+ */
+function ddwc_driver_applications_menu() {
+add_users_page( __( 'Driver Applications', 'ddwc' ), __( 'Driver Applications', 'ddwc' ), 'manage_options', 'ddwc-driver-applications', 'ddwc_driver_applications_page' );
+}
+add_action( 'admin_menu', 'ddwc_driver_applications_menu' );
+
+/**
+ * Render the driver applications admin page.
+ *
+ * @since 2.5.0
+ */
+function ddwc_driver_applications_page() {
+
+if ( isset( $_POST['ddwc_application_action'], $_POST['user_id'], $_POST['ddwc_process_application_nonce'] ) && wp_verify_nonce( $_POST['ddwc_process_application_nonce'], 'ddwc_process_application' ) ) {
+$user_id = absint( $_POST['user_id'] );
+
+if ( 'approve' === $_POST['ddwc_application_action'] ) {
+$user = new WP_User( $user_id );
+$user->add_role( 'driver' );
+update_user_meta( $user_id, 'ddwc_driver_application_status', 'approved' );
+} elseif ( 'reject' === $_POST['ddwc_application_action'] ) {
+update_user_meta( $user_id, 'ddwc_driver_application_status', 'rejected' );
+}
+}
+
+$users = get_users(
+array(
+'meta_key'   => 'ddwc_driver_application_status',
+'meta_value' => 'pending',
+)
+);
+
+echo '<div class="wrap"><h1>' . esc_html__( 'Driver Applications', 'ddwc' ) . '</h1>';
+
+if ( empty( $users ) ) {
+echo '<p>' . esc_html__( 'No applications found.', 'ddwc' ) . '</p>';
+} else {
+echo '<table class="wp-list-table widefat fixed striped"><thead><tr><th>' . esc_html__( 'User', 'ddwc' ) . '</th><th>' . esc_html__( 'Message', 'ddwc' ) . '</th><th>' . esc_html__( 'Actions', 'ddwc' ) . '</th></tr></thead><tbody>';
+
+foreach ( $users as $user ) {
+$message = get_user_meta( $user->ID, 'ddwc_driver_application_message', true );
+echo '<tr><td>' . esc_html( $user->user_login ) . '</td><td>' . esc_html( $message ) . '</td><td><form method="post">' . wp_nonce_field( 'ddwc_process_application', 'ddwc_process_application_nonce', true, false ) . '<input type="hidden" name="user_id" value="' . esc_attr( $user->ID ) . '" /><button class="button" name="ddwc_application_action" value="approve">' . esc_html__( 'Approve', 'ddwc' ) . '</button> <button class="button" name="ddwc_application_action" value="reject">' . esc_html__( 'Reject', 'ddwc' ) . '</button></form></td></tr>';
+}
+
+echo '</tbody></table>';
+}
+
+echo '</div>';
+}

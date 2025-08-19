@@ -86,28 +86,37 @@ function ddwc_driver_save_order_details( $post_id, $post ) {
 		return $post->ID;
 	}
 
-	/**
-	 * OK, we're authenticated: we need to find and save the data
-	 * We'll put it into an array to make it easier to loop though.
-	 */
-	$ddwc_driver_order_meta['ddwc_driver_id'] = $_POST['ddwc_driver_id'];
+        /**
+         * OK, we're authenticated: we need to find and save the data
+         * We'll put it into an array to make it easier to loop though.
+         */
+        $ddwc_driver_order_meta['ddwc_driver_id'] = $_POST['ddwc_driver_id'];
 
-	/** Add values of $ddwc_driver_order_meta as custom fields */
+        // Store previously assigned driver for comparison.
+        $previous_driver = get_post_meta( $post->ID, 'ddwc_driver_id', true );
 
-	foreach ( $ddwc_driver_order_meta as $key => $value ) { /** Cycle through the $thccbd_meta array! */
-		if ( 'revision' === $post->post_type ) { /** Don't store custom data twice */
-			return;
-		}
-		$value = implode( ',', (array) $value ); // If $value is an array, make it a CSV (unlikely)
-		if ( get_post_meta( $post->ID, $key, false ) ) { // If the custom field already has a value.
-			update_post_meta( $post->ID, $key, $value );
-		} else { // If the custom field doesn't have a value.
-			add_post_meta( $post->ID, $key, $value );
-		}
-		if ( ! $value ) { /** Delete if blank */
-			delete_post_meta( $post->ID, $key );
-		}
-	}
+        /** Add values of $ddwc_driver_order_meta as custom fields */
+
+        foreach ( $ddwc_driver_order_meta as $key => $value ) { /** Cycle through the $thccbd_meta array! */
+                if ( 'revision' === $post->post_type ) { /** Don't store custom data twice */
+                        return;
+                }
+                $value = implode( ',', (array) $value ); // If $value is an array, make it a CSV (unlikely)
+                if ( get_post_meta( $post->ID, $key, false ) ) { // If the custom field already has a value.
+                        update_post_meta( $post->ID, $key, $value );
+                } else { // If the custom field doesn't have a value.
+                        add_post_meta( $post->ID, $key, $value );
+                }
+                if ( ! $value ) { /** Delete if blank */
+                        delete_post_meta( $post->ID, $key );
+                }
+        }
+
+        // Trigger notification when a new driver is assigned.
+        $new_driver = intval( $_POST['ddwc_driver_id'] );
+        if ( $new_driver > 0 && $new_driver !== intval( $previous_driver ) ) {
+                do_action( 'ddwc_driver_assigned', $post->ID, $new_driver );
+        }
 
 }
 add_action( 'save_post', 'ddwc_driver_save_order_details', 1, 2 ); // Save the custom fields.
