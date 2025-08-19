@@ -179,8 +179,7 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 
 /**
 * codex/trigger-email-and-sms-on-driver-assignment-i6vif7
- codex/trigger-email-and-sms-on-driver-assignment-i6vif7
-=======
+* codex/trigger-email-and-sms-on-driver-assignment-i6vif7
 * codex/add-email/sms-notifications-for-order-status
  * Notify customer when an order is marked out for delivery.
  *
@@ -227,13 +226,36 @@ function ddwc_customer_out_for_delivery_notification() {
                         'body'    => array(
                                 'From' => $twilio_from,
                                 'To'   => $phone,
-
-* codex/trigger-email-and-sms-on-driver-assignment
+                                'Body' => $message,
+                        ),
+                        'headers' => array(
+                                'Authorization' => 'Basic ' . base64_encode( $twilio_sid . ':' . $twilio_token ),
+                        ),
+                );
+                $response = wp_remote_post( $endpoint, $args );
+                if ( is_wp_error( $response ) ) {
+                        // Log error if SMS failed.
+                        $logger = function_exists( 'wc_get_logger' ) ? wc_get_logger() : false;
+                        if ( $logger ) {
+                                $logger->error( 'Failed to send SMS notification for order #' . $order->get_id() . ': ' . $response->get_error_message(), array( 'source' => 'ddwc' ) );
+                        }
+                }
+        } else {
+                // Log warning if Twilio configuration is missing.
+                $logger = function_exists( 'wc_get_logger' ) ? wc_get_logger() : false;
+                if ( $logger ) {
+                        $logger->warning( 'SMS notification not sent for order #' . $order->get_id() . ' due to missing Twilio configuration or phone number.', array( 'source' =>
+        'ddwc' ) );
+                }
+        }
+}
+add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_out_for_delivery_notification' );
+/**                            
  * Notify a delivery driver when assigned to an order.
  *
  * Sends both an email and an SMS message using Twilio when a driver is
  * assigned to an order. This hooks into both manual and automatic driver
- * assignment paths via the `ddwc_driver_assigned` action.
+ * assignment paths via the /ddwc_driver_assigned` action.
  *
  * @since 2.4.3
  *
@@ -277,8 +299,8 @@ add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
 
 
 // codex/trigger-email-and-sms-on-driver-assignment-i6vif7
-
- *codex/implement-driver-selection-for-new-orders
+/** 
+  *codex/implement-driver-selection-for-new-orders
  * Auto-assign a delivery driver to new orders.
  *
  * Selects an available driver based on the configured algorithm and stores
@@ -288,6 +310,7 @@ add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
  *
  * @param int $order_id Order ID.
  */
+
 function ddwc_auto_assign_driver_to_order( $order_id ) {
 
 	// Bail if a driver is already assigned.
@@ -346,7 +369,7 @@ function ddwc_auto_assign_driver_to_order( $order_id ) {
 	}
 }
 add_action( 'woocommerce_new_order', 'ddwc_auto_assign_driver_to_order' );
-
+/** 
  * Send admin notifications when a driver completes an order.
  *
  * Sends an email and SMS to the administrator and logs the results for
@@ -412,8 +435,7 @@ add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_
                         } else {
                                 $logger->error( 'Failed to send admin completion SMS for order #' . $order_id, array( 'source' => 'ddwc' ) );
                         }
-                }
-        } elseif ( $logger ) {
+                } elseif ( $logger ) {
                 $logger->warning( 'Admin completion SMS not sent for order #' . $order_id . ' due to missing Twilio configuration or phone number.', array( 'source' => 'ddwc' ) );
         }
 }
