@@ -27,12 +27,14 @@ function ddwc_dashboard_shortcode() {
 			// Check if the role you're interested in, is present in the array.
 			if ( in_array( 'driver', $user_roles, true ) ) {
 
-				if ( isset( $_GET['orderid'] ) && ( '' != $_GET['orderid'] ) ) {
-					$driver_id = get_post_meta( $_GET['orderid'], 'ddwc_driver_id', true );
-				}
+                               $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
 
-				// Display order info if ?orderid is set and driver is assigned.
-				if ( isset( $_GET['orderid'] ) && ( '' != $_GET['orderid'] ) && ( $driver_id == $user_id ) ) {
+                               if ( $order_id ) {
+                                       $driver_id = get_post_meta( $order_id, 'ddwc_driver_id', true );
+                               }
+
+                               // Display order info if ?orderid is set and driver is assigned.
+                               if ( $order_id && ( $driver_id == $user_id ) ) {
 
 					// The store address.
 					$store_address     = get_option( 'woocommerce_store_address' );
@@ -63,11 +65,15 @@ function ddwc_dashboard_shortcode() {
 					// Filter the store address.
 					$store_address = apply_filters( 'ddwc_driver_dashboard_store_address', $store_address );
 
-					// Get an instance of the WC_Order object
-					$order = wc_get_order( $_GET['orderid'] );
+                                       // Get an instance of the WC_Order object
+                                       $order = wc_get_order( $order_id );
 
-					// Get the order data.
-					$order_data = $order->get_data();
+                                       if ( ! $order ) {
+                                               return;
+                                       }
+
+                                       // Get the order data.
+                                       $order_data = $order->get_data();
 
 					// Specific order data.
 					$order_id                   = $order_data['id'];
@@ -205,8 +211,8 @@ function ddwc_dashboard_shortcode() {
 
 					do_action( 'ddwc_driver_dashboard_order_table_tbody_top' );
 
-					// get an instance of the WC_Order object.
-					$order_items     = wc_get_order( $_GET['orderid'] );
+                                       // get an instance of the WC_Order object.
+                                       $order_items     = wc_get_order( $order_id );
 					$currency_code   = $order_items->get_currency();
 					$currency_symbol = get_woocommerce_currency_symbol( $currency_code );
 
