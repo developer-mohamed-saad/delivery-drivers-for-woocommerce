@@ -141,3 +141,51 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 
     return false;
 }
+
+/**
+ * Notify a delivery driver when assigned to an order.
+ *
+ * Sends both an email and an SMS message using Twilio when a driver is
+ * assigned to an order. This hooks into both manual and automatic driver
+ * assignment paths via the `ddwc_driver_assigned` action.
+ *
+ * @since 2.4.3
+ *
+ * @param int $order_id  The order ID.
+ * @param int $driver_id The user ID of the assigned driver.
+ */
+function ddwc_notify_driver_assignment( $order_id, $driver_id ) {
+
+    // Get order and driver objects.
+    $order  = wc_get_order( $order_id );
+    $driver = get_userdata( $driver_id );
+
+    if ( ! $order || ! $driver ) {
+        return;
+    }
+
+    $order_number = $order->get_order_number();
+    $subject      = sprintf( __( 'New delivery assignment for order #%s', 'ddwc' ), $order_number );
+    $message      = sprintf( __( 'You have been assigned to order #%s.', 'ddwc' ), $order_number );
+
+    // Send email to driver.
+    wp_mail( $driver->user_email, $subject, $message );
+
+    // Send SMS via Twilio if credentials are available.
+    $phone = get_user_meta( $driver_id, 'billing_phone', true );
+    $sid   = get_option( 'ddwc_twilio_account_sid' );
+    $token = get_option( 'ddwc_twilio_auth_token' );
+    $from  = get_option( 'ddwc_twilio_phone_number' );
+
+    if ( class_exists( '\\Twilio\\Rest\\Client' ) && $phone && $sid && $token && $from ) {
+        try {
+            $client = new \Twilio\Rest\Client( $sid, $token );
+            $client->messages->create( $phone, array( 'from' => $from, 'body' => $message ) );
+        } catch ( \Exception $e ) {
+            // Fail silently if SMS could not be sent.
+        }
+    }
+}
+add_action( 'ddwc_driver_assigned', 'ddwc_notify_driver_assignment', 10, 2 );
+add_action( 'ddwc_auto_assign_driver', 'ddwc_notify_driver_assignment', 10, 2 );
+
