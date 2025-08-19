@@ -432,12 +432,31 @@ function ddwc_dashboard_shortcode() {
 				}
 			} else {
 
-				// Set the Access Denied page text.
-				$access_denied = '<h3 class="ddwc access-denied">' . __( 'Access Denied', 'ddwc' ) . '</h3><p>' . __( 'Sorry, but you are not able to view this page.', 'ddwc' ) . '</p>';
-
-				// Return the Access Denied text, filtered.
-				return apply_filters( 'ddwc_access_denied', $access_denied );
-			}
+								$output = '';
+				
+								if ( isset( $_POST['ddwc_driver_application_nonce'] ) && wp_verify_nonce( $_POST['ddwc_driver_application_nonce'], 'ddwc_driver_application' ) ) {
+				$message = sanitize_textarea_field( $_POST['ddwc_driver_application_message'] );
+				update_user_meta( $user_id, 'ddwc_driver_application_message', $message );
+				update_user_meta( $user_id, 'ddwc_driver_application_status', 'pending' );
+				$output .= '<p>' . esc_html__( 'Your application has been submitted.', 'ddwc' ) . '</p>';
+				} else {
+				$status = get_user_meta( $user_id, 'ddwc_driver_application_status', true );
+				if ( 'pending' === $status ) {
+				$output .= '<p>' . esc_html__( 'Your application is pending review.', 'ddwc' ) . '</p>';
+				} elseif ( 'rejected' === $status ) {
+				$output .= '<p>' . esc_html__( 'Your application was rejected.', 'ddwc' ) . '</p>';
+				} else {
+				$output .= '<form method="post" class="ddwc-driver-application">';
+				$output .= '<p><label for="ddwc_driver_application_message">' . esc_html__( 'Application Message', 'ddwc' ) . '</label><br />';
+				$output .= '<textarea name="ddwc_driver_application_message" id="ddwc_driver_application_message" required></textarea></p>';
+				$output .= wp_nonce_field( 'ddwc_driver_application', 'ddwc_driver_application_nonce', true, false );
+				$output .= '<p><input type="submit" class="button" value="' . esc_attr__( 'Apply', 'ddwc' ) . '" /></p>';
+				$output .= '</form>';
+				}
+				}
+				
+				return apply_filters( 'ddwc_driver_application_output', $output );
+}
 
 		} else {
 			// Do nothing.
