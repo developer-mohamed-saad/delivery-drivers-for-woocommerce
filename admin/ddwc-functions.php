@@ -419,12 +419,6 @@ function ddwc_notify_admin_order_completed() {
                         ),
                 );
 
-// codex/add-email/sms-notifications-for-order-status
-                wp_remote_post( $endpoint, $args );
-        }
-}
-add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_out_for_delivery_notification' );
-
                 $response = wp_remote_post( $twilio_url, $sms_args );
 
                 if ( $logger ) {
@@ -435,7 +429,8 @@ add_action( 'ddwc_email_customer_order_status_out_for_delivery', 'ddwc_customer_
                         } else {
                                 $logger->error( 'Failed to send admin completion SMS for order #' . $order_id, array( 'source' => 'ddwc' ) );
                         }
-                } elseif ( $logger ) {
+                }
+        } elseif ( $logger ) {
                 $logger->warning( 'Admin completion SMS not sent for order #' . $order_id . ' due to missing Twilio configuration or phone number.', array( 'source' => 'ddwc' ) );
         }
 }
