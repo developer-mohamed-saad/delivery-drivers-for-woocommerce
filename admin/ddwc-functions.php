@@ -16,10 +16,19 @@
  */
 function ddwc_driver_dashboard_change_statuses() {
 
-	// Get an instance of the WC_Order object.
-	$order        = wc_get_order( $_GET['orderid'] );
-	$order_data   = $order->get_data();
-	$order_status = $order_data['status'];
+        // Get an instance of the WC_Order object.
+        $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
+        if ( ! $order_id ) {
+                return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+                return;
+        }
+
+        $order_data   = $order->get_data();
+        $order_status = $order_data['status'];
 
 	do_action( 'ddwc_driver_dashboard_change_statuses_top' );
 
@@ -43,7 +52,8 @@ function ddwc_driver_dashboard_change_statuses() {
 		do_action( 'ddwc_email_customer_order_status_out_for_delivery' );
 
 		// Redirect so the new order details show on the page.
-		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
+                wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
+                exit;
 
 	}
 
@@ -57,7 +67,8 @@ function ddwc_driver_dashboard_change_statuses() {
 		do_action( 'ddwc_email_admin_order_status_completed' );
 
 		// Redirect so the new order details show on the page.
-		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
+                wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $order_id );
+                exit;
 
 	}
 
@@ -76,10 +87,19 @@ add_action( 'ddwc_driver_dashboard_change_status_forms_top', 'ddwc_driver_dashbo
  */
 function ddwc_driver_dashboard_change_status_forms() {
 
-	// Get an instance of the WC_Order object.
-	$order        = wc_get_order( $_GET['orderid'] );
-	$order_data   = $order->get_data();
-	$order_status = $order_data['status'];
+        // Get an instance of the WC_Order object.
+        $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
+        if ( ! $order_id ) {
+                return;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+                return;
+        }
+
+        $order_data   = $order->get_data();
+        $order_status = $order_data['status'];
 
 	do_action( 'ddwc_driver_dashboard_change_status_forms_top' );
 
@@ -143,6 +163,7 @@ function ddwc_check_user_roles( $roles, $user_id = null ) {
 }
 
 /**
+ codex/implement-driver-selection-for-new-orders
  * Auto-assign a delivery driver to new orders.
  *
  * Selects an available driver based on the configured algorithm and stores
@@ -210,3 +231,70 @@ function ddwc_auto_assign_driver_to_order( $order_id ) {
 	}
 }
 add_action( 'woocommerce_new_order', 'ddwc_auto_assign_driver_to_order' );
+
+ * Send admin notifications when a driver completes an order.
+ *
+ * Sends an email and SMS to the administrator and logs the results for
+ * troubleshooting purposes.
+ *
+ * @since 2.4.2
+ */
+function ddwc_notify_admin_order_completed() {
+
+        // Ensure an order ID is available.
+        if ( ! isset( $_GET['orderid'] ) ) {
+                return;
+        }
+
+        $order_id   = absint( $_GET['orderid'] );
+        $admin_email = get_option( 'admin_email' );
+        $subject     = sprintf( __( 'Order #%d completed', 'ddwc' ), $order_id );
+        $message     = sprintf( __( 'Order #%d has been marked as completed by the driver.', 'ddwc' ), $order_id );
+
+        $logger = function_exists( 'wc_get_logger' ) ? wc_get_logger() : false;
+
+        $email_sent = wp_mail( $admin_email, $subject, $message );
+
+        if ( $logger ) {
+                if ( $email_sent ) {
+                        $logger->info( 'Admin completion email sent for order #' . $order_id, array( 'source' => 'ddwc' ) );
+                } else {
+                        $logger->error( 'Failed to send admin completion email for order #' . $order_id, array( 'source' => 'ddwc' ) );
+                }
+        }
+
+        $admin_phone  = get_option( 'ddwc_settings_dispatch_phone_number' );
+        $twilio_sid   = get_option( 'ddwc_settings_twilio_account_sid' );
+        $twilio_token = get_option( 'ddwc_settings_twilio_auth_token' );
+        $twilio_from  = get_option( 'ddwc_settings_twilio_phone_number' );
+
+        if ( $admin_phone && $twilio_sid && $twilio_token && $twilio_from ) {
+                $twilio_url = 'https://api.twilio.com/2010-04-01/Accounts/' . $twilio_sid . '/Messages.json';
+                $sms_args   = array(
+                        'body'    => array(
+                                'From' => $twilio_from,
+                                'To'   => $admin_phone,
+                                'Body' => $message,
+                        ),
+                        'headers' => array(
+                                'Authorization' => 'Basic ' . base64_encode( $twilio_sid . ':' . $twilio_token ),
+                        ),
+                );
+
+                $response = wp_remote_post( $twilio_url, $sms_args );
+
+                if ( $logger ) {
+                        if ( is_wp_error( $response ) ) {
+                                $logger->error( 'Failed to send admin completion SMS for order #' . $order_id . ': ' . $response->get_error_message(), array( 'source' => 'ddwc' ) );
+                        } elseif ( 201 === wp_remote_retrieve_response_code( $response ) ) {
+                                $logger->info( 'Admin completion SMS sent for order #' . $order_id, array( 'source' => 'ddwc' ) );
+                        } else {
+                                $logger->error( 'Failed to send admin completion SMS for order #' . $order_id, array( 'source' => 'ddwc' ) );
+                        }
+                }
+        } elseif ( $logger ) {
+                $logger->warning( 'Admin completion SMS not sent for order #' . $order_id . ' due to missing Twilio configuration or phone number.', array( 'source' => 'ddwc' ) );
+        }
+}
+add_action( 'ddwc_email_admin_order_status_completed', 'ddwc_notify_admin_order_completed' );
+ master
