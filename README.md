@@ -20,7 +20,7 @@ This plugin gives you the ability to add new users with the designated `Driver` 
 
 Once the driver has been added to your userlist, you can edit orders and assign a specific driver to the order.
 
-### Driver capabilites
+### Driver capabilities
 
 Give your drivers the ability to view their assigned orders, mark an order as `Out for Delivery` and then `Completed` after the order has been delivered.
 
