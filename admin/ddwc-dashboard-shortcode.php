@@ -27,12 +27,14 @@ function ddwc_dashboard_shortcode() {
 			// Check if the role you're interested in, is present in the array.
 			if ( in_array( 'driver', $user_roles, true ) ) {
 
-				if ( isset( $_GET['orderid'] ) && ( '' != $_GET['orderid'] ) ) {
-					$driver_id = get_post_meta( $_GET['orderid'], 'ddwc_driver_id', true );
-				}
+                               $order_id = isset( $_GET['orderid'] ) ? absint( $_GET['orderid'] ) : 0;
 
-				// Display order info if ?orderid is set and driver is assigned.
-				if ( isset( $_GET['orderid'] ) && ( '' != $_GET['orderid'] ) && ( $driver_id == $user_id ) ) {
+                               if ( $order_id ) {
+                                       $driver_id = get_post_meta( $order_id, 'ddwc_driver_id', true );
+                               }
+
+                               // Display order info if ?orderid is set and driver is assigned.
+                               if ( $order_id && ( $driver_id == $user_id ) ) {
 
 					// The store address.
 					$store_address     = get_option( 'woocommerce_store_address' );
@@ -63,11 +65,15 @@ function ddwc_dashboard_shortcode() {
 					// Filter the store address.
 					$store_address = apply_filters( 'ddwc_driver_dashboard_store_address', $store_address );
 
-					// Get an instance of the WC_Order object
-					$order = wc_get_order( $_GET['orderid'] );
+                                       // Get an instance of the WC_Order object
+                                       $order = wc_get_order( $order_id );
 
-					// Get the order data.
-					$order_data = $order->get_data();
+                                       if ( ! $order ) {
+                                               return;
+                                       }
+
+                                       // Get the order data.
+                                       $order_data = $order->get_data();
 
 					// Specific order data.
 					$order_id                   = $order_data['id'];
@@ -205,8 +211,8 @@ function ddwc_dashboard_shortcode() {
 
 					do_action( 'ddwc_driver_dashboard_order_table_tbody_top' );
 
-					// get an instance of the WC_Order object.
-					$order_items     = wc_get_order( $_GET['orderid'] );
+                                       // get an instance of the WC_Order object.
+                                       $order_items     = wc_get_order( $order_id );
 					$currency_code   = $order_items->get_currency();
 					$currency_symbol = get_woocommerce_currency_symbol( $currency_code );
 
@@ -432,12 +438,31 @@ function ddwc_dashboard_shortcode() {
 				}
 			} else {
 
-				// Set the Access Denied page text.
-				$access_denied = '<h3 class="ddwc access-denied">' . __( 'Access Denied', 'ddwc' ) . '</h3><p>' . __( 'Sorry, but you are not able to view this page.', 'ddwc' ) . '</p>';
-
-				// Return the Access Denied text, filtered.
-				return apply_filters( 'ddwc_access_denied', $access_denied );
-			}
+								$output = '';
+				
+								if ( isset( $_POST['ddwc_driver_application_nonce'] ) && wp_verify_nonce( $_POST['ddwc_driver_application_nonce'], 'ddwc_driver_application' ) ) {
+				$message = sanitize_textarea_field( $_POST['ddwc_driver_application_message'] );
+				update_user_meta( $user_id, 'ddwc_driver_application_message', $message );
+				update_user_meta( $user_id, 'ddwc_driver_application_status', 'pending' );
+				$output .= '<p>' . esc_html__( 'Your application has been submitted.', 'ddwc' ) . '</p>';
+				} else {
+				$status = get_user_meta( $user_id, 'ddwc_driver_application_status', true );
+				if ( 'pending' === $status ) {
+				$output .= '<p>' . esc_html__( 'Your application is pending review.', 'ddwc' ) . '</p>';
+				} elseif ( 'rejected' === $status ) {
+				$output .= '<p>' . esc_html__( 'Your application was rejected.', 'ddwc' ) . '</p>';
+				} else {
+				$output .= '<form method="post" class="ddwc-driver-application">';
+				$output .= '<p><label for="ddwc_driver_application_message">' . esc_html__( 'Application Message', 'ddwc' ) . '</label><br />';
+				$output .= '<textarea name="ddwc_driver_application_message" id="ddwc_driver_application_message" required></textarea></p>';
+				$output .= wp_nonce_field( 'ddwc_driver_application', 'ddwc_driver_application_nonce', true, false );
+				$output .= '<p><input type="submit" class="button" value="' . esc_attr__( 'Apply', 'ddwc' ) . '" /></p>';
+				$output .= '</form>';
+				}
+				}
+				
+				return apply_filters( 'ddwc_driver_application_output', $output );
+}
 
 		} else {
 			// Do nothing.
