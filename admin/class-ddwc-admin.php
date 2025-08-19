@@ -194,6 +194,15 @@ function ddwc_delivery_driver_settings() {
 		$order->update_status( 'processing' );
 	} else {
 		$order->update_status( 'driver-assigned' );
+
+                // Send SMS notification to driver.
+                $driver_phone   = get_user_meta( $meta_value, 'billing_phone', true );
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $driver_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'You have been assigned to order #%s', 'ddwc' ), $item_id );
+                        $twilio->send_sms( $driver_phone, $dispatch_phone, $message );
+                }
 	}
 
 	// WooCommerce product loop $args

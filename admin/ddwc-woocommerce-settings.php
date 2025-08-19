@@ -131,6 +131,20 @@ class Delivery_Drivers_WooCommerce_Settings {
 					'no'  => 'No',
 				),
 			),
+                        // Twilio Account SID.
+                        'twilio_account_sid' => array(
+                                'name' => __( 'Twilio Account SID', 'ddwc' ),
+                                'type' => 'text',
+                                'desc' => __( 'Twilio account SID used for sending SMS notifications.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_twilio_account_sid',
+                        ),
+                        // Twilio Auth Token.
+                        'twilio_auth_token' => array(
+                                'name' => __( 'Twilio Auth Token', 'ddwc' ),
+                                'type' => 'password',
+                                'desc' => __( 'Twilio auth token used for sending SMS notifications.', 'ddwc' ),
+                                'id'   => 'ddwc_settings_twilio_auth_token',
+                        ),
 			// Section End.
 			'section_end' => array(
 				'type' => 'sectionend',

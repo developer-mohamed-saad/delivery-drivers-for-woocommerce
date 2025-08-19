@@ -41,6 +41,14 @@ function ddwc_driver_dashboard_change_statuses() {
 
 		// Run additional functions.
 		do_action( 'ddwc_email_customer_order_status_out_for_delivery' );
+                // Send SMS notification to customer.
+                $customer_phone = $order->get_billing_phone();
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $customer_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'Your order #%s is out for delivery.', 'ddwc' ), $order->get_id() );
+                        $twilio->send_sms( $customer_phone, $dispatch_phone, $message );
+                }
 
 		// Redirect so the new order details show on the page.
 		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
@@ -55,6 +63,14 @@ function ddwc_driver_dashboard_change_statuses() {
 
 		// Run additional functions.
 		do_action( 'ddwc_email_admin_order_status_completed' );
+                // Send SMS notification to customer.
+                $customer_phone = $order->get_billing_phone();
+                $dispatch_phone = get_option( 'ddwc_settings_dispatch_phone_number' );
+                if ( $customer_phone && $dispatch_phone ) {
+                        $twilio  = new Delivery_Drivers_Twilio();
+                        $message = sprintf( __( 'Your order #%s has been delivered.', 'ddwc' ), $order->get_id() );
+                        $twilio->send_sms( $customer_phone, $dispatch_phone, $message );
+                }
 
 		// Redirect so the new order details show on the page.
 		wp_redirect( get_permalink( get_option( 'woocommerce_myaccount_page_id' ) ) . 'driver-dashboard/?orderid=' . $_GET['orderid'] );
