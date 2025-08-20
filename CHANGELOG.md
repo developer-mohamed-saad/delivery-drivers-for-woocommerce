@@ -1,5 +1,8 @@
 # Changelog
 
+### Unreleased
+* Fixed driver dashboard shortcode to display assigned orders using `wc_get_orders` for improved compatibility in `admin/ddwc-dashboard-shortcode.php`
+
 ### 2.4.2
 * Bugfix removed formatted address filter from everywhere except driver dashboard in `admin/ddwc-woocommerce-settings.php`
 * Updated formatted address filter on driver dashboard in `admin/ddwc-dashboard-shortcode.php`
