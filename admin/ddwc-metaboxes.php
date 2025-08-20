@@ -38,8 +38,8 @@ add_action( 'add_meta_boxes', 'ddwc_metaboxes' );
  */
 function ddwc_build() {
 	global $post;
-	// get current woocommerce admin order id as int and sanitize it.
-	$post_id = intval( $_GET['id'] );
+	// Get current WooCommerce admin order id as int and sanitize it.
+	$post_id = absint( $post->ID );
 
 	// Noncename needed to verify where the data originated.
 	echo '<input type="hidden" name="ddwc_meta_noncename" id="ddwc_meta_noncename" value="' .
@@ -62,7 +62,7 @@ function ddwc_build() {
 	echo '</div>';
 
 	// Get driver rating.
-	$ddwc_driver_rating = get_post_meta( $post->ID, 'ddwc_delivery_rating', true );
+        $ddwc_driver_rating = get_post_meta( $post_id, 'ddwc_delivery_rating', true );
 
 	// Display driver rating.
 	if ( ! empty( $ddwc_driver_rating ) ) {
@@ -75,30 +75,32 @@ function ddwc_build() {
  * Save the Metabox Data
  */
 function ddwc_driver_save_order_details( $post_id, $post ) {
-	/**
-	 * Verify this came from the our screen and with proper authorization,
-	 * because save_post can be triggered at other times
-	 */
-	if (
-		! isset( $_POST['ddwc_meta_noncename' ] ) ||
-		! wp_verify_nonce( $_POST['ddwc_meta_noncename'], plugin_basename( __FILE__ ) )
-	) {
-		return $post->ID;
-	}
+        /**
+         * Verify this came from our screen and with proper authorization,
+         * because save_post can be triggered at other times
+         */
+        if (
+                ! isset( $_POST['ddwc_meta_noncename' ] ) ||
+                ! wp_verify_nonce( $_POST['ddwc_meta_noncename'], plugin_basename( __FILE__ ) )
+        ) {
+                return $post_id;
+        }
 
-	/** Is the user allowed to edit the post or page? */
-	if ( ! current_user_can( 'edit_post', $post->ID ) ) {
-		return $post->ID;
-	}
+        /** Is the user allowed to edit the post or page? */
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+                return $post_id;
+        }
 
         /**
          * OK, we're authenticated: we need to find and save the data
          * We'll put it into an array to make it easier to loop though.
          */
-        $ddwc_driver_order_meta['ddwc_driver_id'] = $_POST['ddwc_driver_id'];
+        if ( isset( $_POST['ddwc_driver_id'] ) ) {
+                $ddwc_driver_order_meta['ddwc_driver_id'] = absint( $_POST['ddwc_driver_id'] );
+        }
 
         // Store previously assigned driver for comparison.
-        $previous_driver = get_post_meta( $post->ID, 'ddwc_driver_id', true );
+        $previous_driver = get_post_meta( $post_id, 'ddwc_driver_id', true );
 
         /** Add values of $ddwc_driver_order_meta as custom fields */
 
@@ -107,21 +109,22 @@ function ddwc_driver_save_order_details( $post_id, $post ) {
                         return;
                 }
                 $value = implode( ',', (array) $value ); // If $value is an array, make it a CSV (unlikely)
-                if ( get_post_meta( $post->ID, $key, false ) ) { // If the custom field already has a value.
-                        update_post_meta( $post->ID, $key, $value );
+                if ( get_post_meta( $post_id, $key, false ) ) { // If the custom field already has a value.
+                        update_post_meta( $post_id, $key, $value );
                 } else { // If the custom field doesn't have a value.
-                        add_post_meta( $post->ID, $key, $value );
+                        add_post_meta( $post_id, $key, $value );
                 }
                 if ( ! $value ) { /** Delete if blank */
-                        delete_post_meta( $post->ID, $key );
+                        delete_post_meta( $post_id, $key );
                 }
         }
 
         // Trigger notification when a new driver is assigned.
-        $new_driver = intval( $_POST['ddwc_driver_id'] );
+        $new_driver = isset( $_POST['ddwc_driver_id'] ) ? intval( $_POST['ddwc_driver_id'] ) : 0;
         if ( $new_driver > 0 && $new_driver !== intval( $previous_driver ) ) {
-                do_action( 'ddwc_driver_assigned', $post->ID, $new_driver );
+                do_action( 'ddwc_driver_assigned', $post_id, $new_driver );
         }
 
 }
 add_action( 'save_post', 'ddwc_driver_save_order_details', 1, 2 ); // Save the custom fields.
+add_action( 'woocommerce_process_shop_order_meta', 'ddwc_driver_save_order_details', 45, 2 );
