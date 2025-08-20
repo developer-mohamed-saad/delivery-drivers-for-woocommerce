@@ -48,7 +48,7 @@ jQuery(document).ready(function ($) {
     jQuery('.ddwc-availability label.switch input[type=checkbox]').change(function(e) {
         var user_id = $(this).attr('id');
         var metakey = 'ddwc_driver_availability';
-        var metavalue = $(this).attr('checked');
+        var metavalue = $(this).is(':checked') ? 'checked' : '';
         $.post(WPaAjax.ajaxurl,{
             action : 'ddwc_driver_availability_update',
             user_id : user_id,
