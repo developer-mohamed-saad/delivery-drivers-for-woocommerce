@@ -273,18 +273,18 @@ function ddwc_dashboard_shortcode() {
 					/**
 					 * Args for Orders with Driver ID attached
 					 */
-					$args = array(
-						'post_type'      => 'shop_order',
-						'posts_per_page' => -1,
-						'post_status'    => 'any',
-						'meta_key'       => 'ddwc_driver_id',
-						'meta_value'     => $user_id
-					);
+                                       $args = array(
+                                               'limit'      => -1,
+                                               'meta_key'   => 'ddwc_driver_id',
+                                               'meta_value' => $user_id,
+                                               'return'     => 'ids',
+                                               'status'     => array_keys( wc_get_order_statuses() ),
+                                       );
 
 					/**
 					 * Get Orders with Driver ID attached
 					 */
-					$assigned_orders = get_posts( $args );
+                                       $assigned_orders = wc_get_orders( $args );
 
 					/**
 					 * If Orders have Driver ID attached
@@ -302,10 +302,10 @@ function ddwc_dashboard_shortcode() {
 						echo '<table class="ddwc-dashboard">';
 						echo '<thead><tr><td>' . __( 'ID', 'ddwc' ) . '</td><td>' . __( 'Date', 'ddwc' ) . '</td><td>' . __( 'Status', 'ddwc' ) . '</td>' . apply_filters( 'ddwc_driver_dashboard_assigned_orders_total_title', $total_title ) . '</tr></thead>';
 						echo '<tbody>';
-						foreach ( $assigned_orders as $driver_order ) {
+                                               foreach ( $assigned_orders as $driver_order_id ) {
 
-							// Get an instance of the WC_Order object.
-							$order = wc_get_order( $driver_order->ID );
+                                                       // Get an instance of the WC_Order object.
+                                                       $order = wc_get_order( $driver_order_id );
 
 							$order_data = $order->get_data(); // The Order data.
 
@@ -335,15 +335,15 @@ function ddwc_dashboard_shortcode() {
 							$order_total_tax            = $order_data['total_tax'];
 							$order_customer_id          = $order_data['customer_id'];
 
-							if ( 'processing' === $order_status || 'driver-assigned' === $order_status || 'out-for-delivery' === $order_status ) {
-								echo '<tr>';
-								echo '<td><a href="' . apply_filters( 'ddwc_driver_dashboard_assigned_orders_order_details_url', '?orderid=' . $driver_order->ID, $driver_order->ID ) . '">' . apply_filters( 'ddwc_order_number', $driver_order->ID ) . '</a></td>';
+                                                          if ( 'processing' === $order_status || 'driver-assigned' === $order_status || 'out-for-delivery' === $order_status ) {
+                                                                  echo '<tr>';
+                                                                  echo '<td><a href="' . apply_filters( 'ddwc_driver_dashboard_assigned_orders_order_details_url', '?orderid=' . $driver_order_id, $driver_order_id ) . '">' . apply_filters( 'ddwc_order_number', $driver_order_id ) . '</a></td>';
 								echo '<td>' . $order_date_created . '</td>';
 								echo '<td>' . wc_get_order_status_name( $order_status ) . '</td>';
 
-								if ( isset( $order_total ) ) {
-									$order_total = '<td>'  . $currency_symbol . $order_total . '</td>';
-									echo apply_filters( 'ddwc_driver_dashboard_assigned_orders_total', $order_total, $driver_order->ID );
+                                                                  if ( isset( $order_total ) ) {
+                                                                          $order_total = '<td>'  . $currency_symbol . $order_total . '</td>';
+                                                                          echo apply_filters( 'ddwc_driver_dashboard_assigned_orders_total', $order_total, $driver_order_id );
 								} else {
 									echo '<td>-</td>';
 								}
@@ -366,10 +366,10 @@ function ddwc_dashboard_shortcode() {
 						echo '<thead><tr><td>' . __( 'ID', 'ddwc' ) . '</td><td>' . __( 'Date', 'ddwc' ) . '</td><td>' . __( 'Status', 'ddwc' ) . '</td>' . apply_filters( 'ddwc_driver_dashboard_completed_orders_total_title', $total_title ) . '</tr></thead>';
 						echo '<tbody>';
 						echo do_action( 'ddwc_driver_dashboard_completed_orders_tbody_top' );
-						foreach ( $assigned_orders as $driver_order ) {
+                                               foreach ( $assigned_orders as $driver_order_id ) {
 
-							// Get an instance of the WC_Order object.
-							$order = wc_get_order( $driver_order->ID );
+                                                       // Get an instance of the WC_Order object.
+                                                       $order = wc_get_order( $driver_order_id );
 
 							// Get order data.
 							$order_data      = $order->get_data();
@@ -395,15 +395,15 @@ function ddwc_dashboard_shortcode() {
 							$order_total_tax            = $order_data['total_tax'];
 							$order_customer_id          = $order_data['customer_id'];
 
-							if ( 'completed' === $order_status ) {
-								echo '<tr>';
-								echo '<td><a href="?orderid=' . $driver_order->ID . '">' . apply_filters( 'ddwc_order_number', $driver_order->ID ) . '</a></td>';
+                                                          if ( 'completed' === $order_status ) {
+                                                                  echo '<tr>';
+                                                                  echo '<td><a href="?orderid=' . $driver_order_id . '">' . apply_filters( 'ddwc_order_number', $driver_order_id ) . '</a></td>';
 								echo '<td>' . $order_date_created . '</td>';
 								echo '<td>' . wc_get_order_status_name( $order_status ) . '</td>';
 
-								if ( isset( $order_total ) ) {
-									$order_total = '<td>'  . $currency_symbol . $order_total . '</td>';
-									echo apply_filters( 'ddwc_driver_dashboard_completed_orders_total', $order_total, $driver_order->ID );
+                                                                  if ( isset( $order_total ) ) {
+                                                                          $order_total = '<td>'  . $currency_symbol . $order_total . '</td>';
+                                                                          echo apply_filters( 'ddwc_driver_dashboard_completed_orders_total', $order_total, $driver_order_id );
 								} else {
 									echo '<td>-</td>';
 								}
