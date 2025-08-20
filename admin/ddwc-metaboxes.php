@@ -1,4 +1,5 @@
 <?php
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 
 /**
  * The Delivery Driver Metaboxes.
@@ -18,13 +19,16 @@
  * @since    1.0
  */
 function ddwc_metaboxes() {
+	    $screen = class_exists( '\Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController' ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+        ? wc_get_page_screen_id( 'shop-order' ): 'shop_order';
+
 	add_meta_box(
 		'ddwc_metaboxes',
 		__( 'Delivery Driver', 'ddwc' ),
 		'ddwc_build',
-		'shop_order',
+		$screen,
 		'side',
-		'default'
+		'high'
 	);
 }
 add_action( 'add_meta_boxes', 'ddwc_metaboxes' );
@@ -34,13 +38,15 @@ add_action( 'add_meta_boxes', 'ddwc_metaboxes' );
  */
 function ddwc_build() {
 	global $post;
+	// get current woocommerce admin order id as int and sanitize it.
+	$post_id = intval( $_GET['id'] );
 
 	// Noncename needed to verify where the data originated.
 	echo '<input type="hidden" name="ddwc_meta_noncename" id="ddwc_meta_noncename" value="' .
 	wp_create_nonce( plugin_basename( __FILE__ ) ) . '" />';
 
 	// Get the driver data if its already been entered.
-	$ddwc_driver_id = get_post_meta( $post->ID, 'ddwc_driver_id', true );
+	$ddwc_driver_id = get_post_meta( $post_id, 'ddwc_driver_id', true );
 
 	// Echo Delivery Driver Metabox Input Field.
 	echo '<div class="ddwc-driver-box">';
@@ -69,7 +75,6 @@ function ddwc_build() {
  * Save the Metabox Data
  */
 function ddwc_driver_save_order_details( $post_id, $post ) {
-
 	/**
 	 * Verify this came from the our screen and with proper authorization,
 	 * because save_post can be triggered at other times
