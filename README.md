@@ -1,61 +1,52 @@
 ![Delivery Drivers for WooCommerce](https://robertdevore.com/wp-content/uploads/2018/09/ddwc-logo.png)
 
-Brought to you by [Devio Digital](https://deviodigital.com) - [Release Notes](https://robertdevore.com/delivery-drivers-for-woocommerce/) - [Go Pro](https://deviodigital.com/product/delivery-drivers-for-woocommerce-pro/)
+# Delivery Drivers for WooCommerce
 
-## Manage your mobile workforce
+Streamline last‑mile delivery and keep customers informed with a powerful driver management toolkit for WooCommerce stores. **Delivery Drivers for WooCommerce** connects dispatchers, drivers and customers so your business can deliver more — faster.
 
-Delivery Drivers for WooCommerce offers better driver management for all delivery services who use WooCommerce.
+## Key Features
 
-Your business benefits from this plugin by giving your drivers the ability to easily connect with both the customer of the order and your dispatch center.
+* **Driver Assignment** – Add users with the custom `Driver` role and assign them to orders directly from the WooCommerce admin.
+* **Driver Dashboard** – Drivers can view their deliveries, mark orders as **Out for Delivery** and complete them when finished.
+* **Real‑Time Updates** – Reduce paperwork and manual communication by giving dispatch and customers instant status visibility.
+* **Mobile Friendly** – Designed for teams on the go to manage routes and orders from any device.
 
-Time saved is money earned.
+## Use Cases
 
-### Get more done
+Perfect for any mobile workforce, including:
 
-The Delivery Drivers for WooCommerce plugin helps your business by reducing paperwork, communications and other manual tasks that eat up your time.
+* Cannabis and alcohol delivery services
+* Restaurants and meal prep businesses
+* Grocery, flower and gift retailers
+* Health & beauty providers and mobile therapists
+* Cleaning, laundry and healthcare organizations
+* …and more!
 
-### Manage your drivers
+## Why Businesses Love It
 
-This plugin gives you the ability to add new users with the designated `Driver` role to your WordPress site.
-
-Once the driver has been added to your userlist, you can edit orders and assign a specific driver to the order.
-
-### Driver capabilities
-
-Give your drivers the ability to view their assigned orders, mark an order as `Out for Delivery` and then `Completed` after the order has been delivered.
-
-With these capabilities passed along to your drivers, you now have additional time free to manage other areas of your business.
-
-## For any mobile workforce
-
-Below are a few examples of delivery services that can benefit from the **Delivery Drivers for WooCommerce** plugin.
-
-* Cannabis
-* Flowers
-* Health & Beauty
-* Mobile Massage
-* Alcohol Delivery
-* Restaurant
-* Grocery Stores
-* Healthcare
-* Cleaning
-* Laundry
-* ... and more!
+* **Optimize Delivery Operations** – Assign orders quickly and monitor progress in one place.
+* **Boost Customer Satisfaction** – Keep shoppers updated with timely delivery notifications.
+* **Empower Your Team** – Give drivers the tools they need to stay productive on the road.
 
 ## Pro Features
 
-[Delivery Drivers for WooCommerce Pro](https://deviodigital.com/product/delivery-drivers-for-woocommerce-pro/) includes the following additional features:
+Upgrade to [Delivery Drivers for WooCommerce Pro](https://deviodigital.com/product/delivery-drivers-for-woocommerce-pro/) for advanced tools:
 
-* Auto-assign drivers when an order is submitted
-* Accept driver applications from the Driver Dashboard
-* Integration with [Twilio](https://www.twilio.com) for SMS messages
-* Email/SMS driver when they've been assigned a new order
-* Email/SMS customer when the driver marks an order as "Out for Delivery"
-* Email/SMS administrator when the driver marks an order as "Completed"
+* Auto‑assign drivers when new orders arrive
+* Accept driver applications via the Driver Dashboard
+* Twilio integration for SMS messaging
+* Automatic email/SMS notifications for drivers, customers and administrators
+
+## Getting Started
+
+1. Install and activate the plugin on your WooCommerce site.
+2. Create or edit users and assign them the `Driver` role.
+3. Edit orders to assign a driver and track the delivery lifecycle.
 
 ## Changelog
 
-View [CHANGELOG.md](https://github.com/robertdevore/delivery-drivers-for-woocommerce/blob/master/CHANGELOG.md)
+See [CHANGELOG.md](https://github.com/robertdevore/delivery-drivers-for-woocommerce/blob/master/CHANGELOG.md).
+
 ## Tests
 
 This plugin uses the WordPress unit test framework with PHPUnit.
@@ -66,3 +57,12 @@ This plugin uses the WordPress unit test framework with PHPUnit.
    ```bash
    phpunit
    ```
+
+## License
+
+Released under the [GNU General Public License v2 or later](LICENSE.txt).
+
+---
+
+Brought to you by [Devio Digital](https://deviodigital.com) · [Release Notes](https://robertdevore.com/delivery-drivers-for-woocommerce/) · [Go Pro](https://deviodigital.com/product/delivery-drivers-for-woocommerce-pro/)
+
